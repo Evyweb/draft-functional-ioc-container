@@ -148,6 +148,46 @@ describe('Registry', () => {
       // Assert
       expect(userService.getUser('456')).toBe('User 456 from https://api.test.com');
     });
+
+    it('should provide a typed resolve function inferring the value type from the registry key', () => {
+      // Arrange
+      container.bind('CONFIG').toValue({apiUrl: 'https://api.test.com', timeout: 2000});
+      container.bind('USER_SERVICE').toFactory((resolve) => {
+        const config = resolve('CONFIG');
+        return {
+          getUser: (id: string) => `User ${id} from ${config.apiUrl} (timeout: ${config.timeout})`
+        };
+      });
+
+      // Act
+      const userService = container.get('USER_SERVICE');
+
+      // Assert
+      expect(userService.getUser('789')).toBe('User 789 from https://api.test.com (timeout: 2000)');
+    });
+
+    it('should restrict the resolve key to keys of the registry', () => {
+      // Act & Assert
+      container.bind('USER_SERVICE').toFactory((resolve) => {
+        // @ts-expect-error - UNKNOWN_KEY is not part of the registry
+        resolve('UNKNOWN_KEY');
+        return {
+          getUser: (id: string) => `User ${id}`
+        };
+      });
+    });
+
+    it('should infer typed resolve return type so non-matching usage fails to compile', () => {
+      // Act & Assert
+      container.bind('USER_SERVICE').toFactory((resolve) => {
+        const dep1 = resolve('DEP1');
+        // @ts-expect-error - DEP1 is a string, comparison with number is invalid
+        const isPositive = dep1 >= 0;
+        return {
+          getUser: (id: string) => `User ${id} (${String(isPositive)})`
+        };
+      });
+    });
   });
 
   describe('When a dependency is missing', () => {
