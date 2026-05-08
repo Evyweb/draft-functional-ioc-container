@@ -73,6 +73,11 @@ type CompatibleKey<TRegistry, TOverride> = [TOverride] extends [never]
       : IncompatibleOverride<K, TRegistry[K], TOverride>
   }[RegistryKey<TRegistry>];
 
+export type TypedResolveFunction<TRegistry> = <
+  TOverride = never,
+  K extends CompatibleKey<TRegistry, TOverride> = CompatibleKey<TRegistry, TOverride>
+>(key: K) => [TOverride] extends [never] ? TRegistry[K & keyof TRegistry] : TOverride;
+
 
 interface Bindable {
   bind(key: DependencyKey): {
@@ -135,7 +140,7 @@ interface TypedBindable<TRegistry> {
         scope?: Scope
       ): void;
     };
-    toFactory: (factory: (resolve: (key: DependencyKey) => unknown) => TRegistry[K], scope?: Scope) => void;
+    toFactory: (factory: (resolve: TypedResolveFunction<TRegistry>) => TRegistry[K], scope?: Scope) => void;
     toClass: {
       <TClass extends new () => TRegistry[K]>(
         constructor: TClass,
@@ -225,7 +230,7 @@ export interface TypedContainer<TRegistry> {
         scope?: Scope
       ): void;
     };
-    toFactory: (factory: (resolve: (key: DependencyKey) => unknown) => TRegistry[K], scope?: Scope) => void;
+    toFactory: (factory: (resolve: TypedResolveFunction<TRegistry>) => TRegistry[K], scope?: Scope) => void;
     toClass: {
       <TClass extends new () => TRegistry[K]>(
         constructor: TClass,
