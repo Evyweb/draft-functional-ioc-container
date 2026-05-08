@@ -1,5 +1,11 @@
 # @evyweb/ioctopus
 
+## 1.4.1
+
+### Patch Changes
+
+-Fix unknown return type for factories
+
 ## 1.4.0
 
 ### Minor Changes
